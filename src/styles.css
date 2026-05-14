@@ -359,14 +359,15 @@ h2 {
   line-height: 1.36;
 }
 
-.letter-signature img {
+.signature-name-row {
+  display: flex;
+  align-items: flex-end;
+}
+
+.signature-name-row img {
   display: block;
-  position: absolute;
-  left: 88px;
-  top: -104px;
-  width: 190px;
+  flex: 0 0 auto;
   height: auto;
-  margin: 0;
 }
 
 .letter-signature strong {
@@ -380,7 +381,6 @@ h2 {
 }
 
 .letter-signature.without-handwriting {
-  grid-template-columns: 1fr;
   width: 320px;
 }
 

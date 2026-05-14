@@ -52,7 +52,6 @@ const LETTER_LINE_HEIGHT = 28;
 const SIGNATURE_ASPECT_RATIO = 363 / 543;
 const SIGNER_NAME_LINE_HEIGHT = 23;
 const SIGNATURE_TITLE_GAP = 6;
-const SIGNATURE_BLOCK_HEIGHT = SIGNER_NAME_LINE_HEIGHT * 2 + SIGNATURE_TITLE_GAP;
 const DATE_LINE_HEIGHT = 20;
 const A4_WIDTH_MM = 210;
 const A4_HEIGHT_MM = 297;
@@ -343,22 +342,23 @@ function renderPage(
               style="left: ${template.signatureLeft}px; top: ${signatureBlockTop(template)}px"
               aria-label="簽名"
             >
-              ${
-                state.includeSignature
-                  ? `
-                    <img
-                      src="${signatureImage}"
-                      alt="Ti 手寫簽名"
-                      style="
-                        left: ${state.signatureOffsetX}px;
-                        top: ${signatureTopOffset()}px;
-                        width: ${state.signatureWidth}px;
-                      "
-                    />
-                  `
-                  : ""
-              }
-              <strong>${escapeHtml(state.signerName || " ")}</strong>
+              <div class="signature-name-row">
+                <strong>${escapeHtml(state.signerName || " ")}</strong>
+                ${
+                  state.includeSignature
+                    ? `
+                      <img
+                        src="${signatureImage}"
+                        alt="Ti 手寫簽名"
+                        style="
+                          margin-left: ${state.signatureOffsetX}px;
+                          width: ${state.signatureWidth}px;
+                        "
+                      />
+                    `
+                    : ""
+                }
+              </div>
               <span>${escapeHtml(state.signerTitle || " ")}</span>
             </section>
             <p
@@ -739,22 +739,25 @@ function numberValue(value: string, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function signatureTopOffset(): number {
-  return Math.round(
-    SIGNER_NAME_LINE_HEIGHT - state.signatureWidth * SIGNATURE_ASPECT_RATIO + state.signatureOffsetY,
-  );
+function signatureImageHeight(): number {
+  return Math.round(state.signatureWidth * SIGNATURE_ASPECT_RATIO);
 }
 
 function signatureBlockTop(template: TemplateConfig): number {
-  return Math.round(template.dateTop + DATE_LINE_HEIGHT - SIGNATURE_BLOCK_HEIGHT);
+  return Math.round(
+    template.dateTop + DATE_LINE_HEIGHT - signatureBlockHeight() + state.signatureOffsetY,
+  );
 }
 
 function signatureVisualTop(template: TemplateConfig): number {
-  const top = signatureBlockTop(template);
-  if (!state.includeSignature) {
-    return top;
-  }
-  return top + Math.min(0, signatureTopOffset());
+  return signatureBlockTop(template);
+}
+
+function signatureBlockHeight(): number {
+  const nameRowHeight = state.includeSignature
+    ? Math.max(SIGNER_NAME_LINE_HEIGHT, signatureImageHeight())
+    : SIGNER_NAME_LINE_HEIGHT;
+  return Math.round(nameRowHeight + SIGNATURE_TITLE_GAP + SIGNER_NAME_LINE_HEIGHT);
 }
 
 function escapeHtml(value: string): string {
