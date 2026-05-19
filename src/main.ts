@@ -16,13 +16,16 @@ import {
 
 import stationery01 from "../2026-德記-英文信籤-01.jpg";
 import stationery02 from "../2026-德記-英文信籤-02.jpg";
+import stationeryZh01 from "../2026-德記-中文信籤-01.jpg";
+import stationeryZh02 from "../2026-德記-中文信籤-02.jpg";
 import signatureImage from "../TI簽名檔.jpg";
 
-type TemplateId = "01" | "02";
+type TemplateId = "en-01" | "en-02" | "zh-01" | "zh-02";
 
 type LetterState = {
   templateId: TemplateId;
   date: string;
+  includeDate: boolean;
   content: string;
   includeSignature: boolean;
   signatureOffsetX: number;
@@ -60,9 +63,9 @@ const A4_HEIGHT_TWIP = 16838;
 const TWIP_PER_PX = 15;
 
 const templates: Record<TemplateId, TemplateConfig> = {
-  "01": {
-    id: "01",
-    label: "英文信籤 01",
+  "en-01": {
+    id: "en-01",
+    label: "英文01",
     image: stationery01,
     contentLeft: 84,
     contentTop: 152,
@@ -72,10 +75,34 @@ const templates: Record<TemplateId, TemplateConfig> = {
     dateTop: 988,
     dateRight: 94,
   },
-  "02": {
-    id: "02",
-    label: "英文信籤 02",
+  "en-02": {
+    id: "en-02",
+    label: "英文02",
     image: stationery02,
+    contentLeft: 92,
+    contentTop: 164,
+    contentWidth: 650,
+    signatureTop: 880,
+    signatureLeft: 88,
+    dateTop: 988,
+    dateRight: 94,
+  },
+  "zh-01": {
+    id: "zh-01",
+    label: "中文01",
+    image: stationeryZh01,
+    contentLeft: 84,
+    contentTop: 152,
+    contentWidth: 660,
+    signatureTop: 880,
+    signatureLeft: 84,
+    dateTop: 988,
+    dateRight: 94,
+  },
+  "zh-02": {
+    id: "zh-02",
+    label: "中文02",
+    image: stationeryZh02,
     contentLeft: 92,
     contentTop: 164,
     contentWidth: 650,
@@ -108,8 +135,9 @@ Best regards,
 DOGGER SCIENTIFIC CO., LTD.`;
 
 const state: LetterState = {
-  templateId: "01",
+  templateId: "en-01",
   date: toDateInputValue(new Date()),
+  includeDate: true,
   content: sampleContent,
   includeSignature: true,
   signatureOffsetX: 88,
@@ -139,21 +167,34 @@ app.innerHTML = `
       <div class="field-group">
         <label class="field-label">信紙版本</label>
         <div class="segmented" role="radiogroup" aria-label="信紙版本">
-          <label>
-            <input type="radio" name="template" value="01" checked />
-            <span>01</span>
-          </label>
-          <label>
-            <input type="radio" name="template" value="02" />
-            <span>02</span>
-          </label>
+          ${Object.values(templates)
+            .map(
+              (template) => `
+                <label>
+                  <input
+                    type="radio"
+                    name="template"
+                    value="${template.id}"
+                    ${template.id === state.templateId ? "checked" : ""}
+                  />
+                  <span>${escapeHtml(template.label)}</span>
+                </label>
+              `,
+            )
+            .join("")}
         </div>
       </div>
 
-      <label class="field-group">
-        <span class="field-label">日期</span>
-        <input id="dateInput" class="control-input" type="date" value="${state.date}" />
-      </label>
+      <div class="date-row">
+        <label class="field-group">
+          <span class="field-label">日期</span>
+          <input id="dateInput" class="control-input" type="date" value="${state.date}" />
+        </label>
+        <label class="date-toggle">
+          <input id="includeDateInput" type="checkbox" ${state.includeDate ? "checked" : ""} />
+          <span>顯示日期</span>
+        </label>
+      </div>
 
       <label class="field-group field-grow">
         <span class="field-label">信件內容</span>
@@ -226,6 +267,7 @@ const previewPages = mustGet<HTMLDivElement>("previewPages");
 const pageCount = mustGet<HTMLDivElement>("pageCount");
 const statusText = mustGet<HTMLParagraphElement>("statusText");
 const dateInput = mustGet<HTMLInputElement>("dateInput");
+const includeDateInput = mustGet<HTMLInputElement>("includeDateInput");
 const contentInput = mustGet<HTMLTextAreaElement>("contentInput");
 const includeSignatureInput = mustGet<HTMLInputElement>("includeSignatureInput");
 const signatureXInput = mustGet<HTMLInputElement>("signatureXInput");
@@ -247,6 +289,12 @@ document.querySelectorAll<HTMLInputElement>('input[name="template"]').forEach((i
 
 dateInput.addEventListener("input", () => {
   state.date = dateInput.value;
+  renderPreview();
+});
+
+includeDateInput.addEventListener("change", () => {
+  state.includeDate = includeDateInput.checked;
+  dateInput.disabled = !state.includeDate;
   renderPreview();
 });
 
@@ -293,6 +341,7 @@ wordButton.addEventListener("click", () => {
   void downloadWord();
 });
 
+dateInput.disabled = !state.includeDate;
 renderPreview();
 
 function renderPreview(): void {
@@ -361,10 +410,16 @@ function renderPage(
               </div>
               <span>${escapeHtml(state.signerTitle || " ")}</span>
             </section>
-            <p
-              class="letter-date"
-              style="right: ${template.dateRight}px; top: ${template.dateTop}px"
-            ><span>Date :</span> ${escapeHtml(displayDate(state.date))}</p>
+            ${
+              state.includeDate
+                ? `
+                  <p
+                    class="letter-date"
+                    style="right: ${template.dateRight}px; top: ${template.dateTop}px"
+                  ><span>Date :</span> ${escapeHtml(displayDate(state.date))}</p>
+                `
+                : ""
+            }
           `
           : ""
       }
@@ -631,6 +686,26 @@ function signatureWordBlock(
   const spacers = Array.from({ length: linesBeforeSignature }, () =>
     new Paragraph({ style: "LetterBody", children: [new TextRun(" ")] }),
   );
+  const dateParagraphs = state.includeDate
+    ? [
+        new Paragraph({
+          alignment: AlignmentType.RIGHT,
+          spacing: { before: 120, after: 0 },
+          children: [
+            new TextRun({
+              text: "Date :",
+              color: "00577d",
+              size: 25,
+            }),
+            new TextRun({
+              text: ` ${displayDate(state.date)}`,
+              color: "231f20",
+              size: 25,
+            }),
+          ],
+        }),
+      ]
+    : [];
 
   return [
     ...spacers,
@@ -663,22 +738,7 @@ function signatureWordBlock(
       style: "LetterBody",
       children: [new TextRun(state.signerTitle || " ")],
     }),
-    new Paragraph({
-      alignment: AlignmentType.RIGHT,
-      spacing: { before: 120, after: 0 },
-      children: [
-        new TextRun({
-          text: "Date :",
-          color: "00577d",
-          size: 25,
-        }),
-        new TextRun({
-          text: ` ${displayDate(state.date)}`,
-          color: "231f20",
-          size: 25,
-        }),
-      ],
-    }),
+    ...dateParagraphs,
   ];
 }
 

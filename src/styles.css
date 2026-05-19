@@ -186,6 +186,40 @@ h2 {
   box-shadow: 0 0 0 3px rgba(43, 184, 186, 0.16);
 }
 
+.control-input:disabled {
+  color: #8a98a1;
+  background: #edf2f3;
+  cursor: not-allowed;
+}
+
+.date-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.date-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  color: #34424b;
+  font-size: 13px;
+  font-weight: 800;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.date-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--blue);
+}
+
 .signature-toggle {
   display: flex;
   align-items: center;
@@ -408,6 +442,10 @@ h2 {
   .control-panel {
     position: static;
     height: auto;
+  }
+
+  .date-row {
+    grid-template-columns: 1fr;
   }
 
   .preview-shell {
